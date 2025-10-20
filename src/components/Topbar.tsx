@@ -54,9 +54,11 @@ export default function Topbar() {
             className="flex items-center gap-3 group hover:opacity-80 transition-opacity"
             onClick={() => setMobileMenuOpen(false)}
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-500 to-cyan-500 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
-              <BarChart3 className="w-6 h-6 text-white" />
-            </div>
+            <img 
+              src="/logo.png" 
+              alt="BluViz" 
+              className="w-14 h-14 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow object-cover"
+            />
             <div>
               <span className="font-bold text-lg bg-gradient-to-r from-accent-600 to-cyan-600 dark:from-accent-400 dark:to-cyan-400 bg-clip-text text-transparent">
                 BluViz
