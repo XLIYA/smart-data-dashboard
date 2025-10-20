@@ -10,10 +10,14 @@ const DataTableHeader = ({ columns }: Props) => (
       {columns.map((c) => {
         const typeInfo = getTypeInfo(c.type)
         return (
-          <th key={c.name} className="px-4 py-3 text-left whitespace-nowrap">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-900 dark:text-gray-100">{c.name}</span>
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeInfo.color}`}>
+          <th key={c.name} className="px-4 py-2 text-left align-bottom">
+            <div className="flex flex-col items-start leading-tight gap-1">
+              <span className="font-semibold text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                {c.name}
+              </span>
+              <span
+                className={`inline-flex items-center rounded-md text-[10px] px-1.5 py-0.5 font-medium ${typeInfo.color}`}
+              >
                 {typeInfo.label}
               </span>
             </div>
