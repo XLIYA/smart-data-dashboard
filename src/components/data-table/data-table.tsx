@@ -1,3 +1,4 @@
+// src/components/data-table/data-table.tsx
 import Card from '../ui/Card'
 import { useMemo } from 'react'
 import type { DataTableProps } from './types'
@@ -5,12 +6,11 @@ import DataTableHeader from './data-table-header'
 import DataTableBody from './data-table-body'
 
 const DataTable = ({ data, columns }: DataTableProps) => {
-  // فقط 100 ردیف اول مثل نسخه قبلی
   const display = useMemo(() => (Array.isArray(data) ? data.slice(0, 100) : []), [data])
 
   return (
     <Card className="p-0 overflow-hidden">
-      <div className="overflow-auto max-h-[600px]">
+      <div className="overflow-auto max-h-[600px] scrollbar">
         <table className="w-full text-sm table-fixed">
           <DataTableHeader columns={columns} />
           <DataTableBody data={display} columns={columns} />

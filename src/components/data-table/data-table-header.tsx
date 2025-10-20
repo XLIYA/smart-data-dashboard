@@ -1,3 +1,4 @@
+// src/components/data-table/data-table-header.tsx
 import { memo } from 'react'
 import type { ColumnDef } from './types'
 import { getTypeInfo } from './type-labels'
@@ -11,7 +12,7 @@ const DataTableHeader = ({ columns }: Props) => (
         const typeInfo = getTypeInfo(c.type)
         return (
           <th key={c.name} className="px-4 py-2 text-left align-bottom">
-            <div className="flex flex-col items-start leading-tight gap-1">
+            <div className="flex flex-col items-start gap-1 leading-tight">
               <span className="font-semibold text-gray-900 dark:text-gray-100 whitespace-nowrap">
                 {c.name}
               </span>

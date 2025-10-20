@@ -1,9 +1,21 @@
+/* src/index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   --radius: 12px;
+  /* اسکرول‌بار: روشن */
+  --sb-track: #e5e7eb;           /* slate-200 */
+  --sb-thumb: #9ca3af;           /* gray-400 */
+  --sb-thumb-hover: #6b7280;     /* gray-500 */
+}
+
+.dark {
+  /* اسکرول‌بار: تیره */
+  --sb-track: rgba(255,255,255,.06);
+  --sb-thumb: rgba(255,255,255,.22);
+  --sb-thumb-hover: rgba(255,255,255,.32);
 }
 
 body {
@@ -39,4 +51,32 @@ body {
 .dark .card-glass {
   background: rgba(20, 24, 31, 0.6);
   border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ─────────────────────────────────────────────
+   Scrollbar utility (Firefox + WebKit)
+   ───────────────────────────────────────────── */
+.scrollbar{
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: var(--sb-thumb) var(--sb-track);
+}
+/* WebKit/Chromium */
+.scrollbar::-webkit-scrollbar{
+  width: 10px;
+  height: 10px;
+}
+.scrollbar::-webkit-scrollbar-track{
+  background: var(--sb-track);
+  border-radius: 9999px;
+}
+.scrollbar::-webkit-scrollbar-thumb{
+  background: var(--sb-thumb);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.scrollbar:hover::-webkit-scrollbar-thumb{
+  background: var(--sb-thumb-hover);
+  background-clip: content-box;
 }
