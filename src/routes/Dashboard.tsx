@@ -20,7 +20,7 @@ function EChartCard({ option }: { option: any }) {
       inst.dispose()
     }
   }, [option])
-  return <div ref={ref} className="h-56" />
+  return <div ref={ref} className="h-[300px] lg:h-[400px]" />
 }
 
 export default function Dashboard() {
@@ -35,7 +35,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -71,7 +71,7 @@ export default function Dashboard() {
           </div>
         </Card>
       ) : (
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 xl:grid-cols-1 gap-8 p-0">
           {charts.map(c => (
             <Card key={c.id} className="p-0 overflow-hidden group relative">
               <EChartCard option={c.option} />
