@@ -1,22 +1,27 @@
+// src/components/chart-builder/chart-builder.tsx
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
-import Select from '../ui/Select'
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '../ui/Select' // اگر فایل‌تان ui/select.tsx است مسیر را به ../ui/select تغییر بدهید
 import { initChart } from '@/lib/echarts'
-import { BarChart3, TrendingUp, Zap } from 'lucide-react'
-
+import { BarChart3, TrendingUp, Zap, CheckCircle } from 'lucide-react'
 import { ChartBuilderProps, ChartConfig, ChartType } from './chart-types'
 import { useDarkModeRef } from './use-dark-mode-ref'
 import { buildAxisOption } from './build-axis-option'
 import { buildScatterOption } from './build-scatter-option'
 
-const ChartBuilder = ({
-  open, onClose, data, columns, onAdd,
-}: ChartBuilderProps) => {
+const ChartBuilder = ({ open, onClose, data, columns, onAdd }: ChartBuilderProps) => {
   const [type, setType] = useState<ChartType>('bar')
   const [xAxis, setXAxis] = useState<string>('')
   const [yAxis, setYAxis] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string>('')
 
   const chartRef = useRef<HTMLDivElement>(null)
   const chartInstance = useRef<any>(null)
@@ -24,36 +29,34 @@ const ChartBuilder = ({
 
   const allColumns = useMemo(
     () => (Array.isArray(columns) ? columns.filter((c) => c?.name) : []),
-    [columns],
+    [columns]
   )
-
   const numCols = useMemo(
     () => allColumns.filter((c: any) => c?.type === 'number'),
-    [allColumns],
+    [allColumns]
   )
 
-  // Auto-select first columns on modal open
+  // انتخاب خودکار اولیه هنگام باز شدن مودال
   useEffect(() => {
     if (!open || allColumns.length === 0) return
     if (!xAxis) setXAxis(allColumns[0].name)
     if (!yAxis && numCols.length > 0) setYAxis(numCols[0].name)
-  }, [open, allColumns, numCols, xAxis, yAxis])
+  }, [open, allColumns, numCols])
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
+  // پاکسازی اینستنس چارت
+  useEffect(
+    () => () => {
       try {
         chartInstance.current?.dispose?.()
         chartInstance.current = null
-      } catch (e) {
-        console.warn('Error disposing chart:', e)
-      }
-    }
-  }, [])
+      } catch {}
+    },
+    []
+  )
 
   const buildOption = useCallback((): any => {
     try {
-      if (!xAxis || !yAxis || data.length === 0) return {}
+      if (!xAxis || !yAxis || !Array.isArray(data) || data.length === 0) return {}
       const isDark = isDarkRef.current
       return type === 'scatter'
         ? buildScatterOption({ xAxis, yAxis, data, isDark })
@@ -64,43 +67,70 @@ const ChartBuilder = ({
     }
   }, [type, xAxis, yAxis, data, isDarkRef])
 
-  // Update chart
+  // رندر و ریسایز پایدار داخل مودال (ResizeObserver + rAF)
   useEffect(() => {
-    if (!open || !chartRef.current || data.length === 0) return
+    if (!open || !chartRef.current || !Array.isArray(data) || data.length === 0) return
     setIsLoading(true)
 
-    const onResize = () => chartInstance.current?.resize?.()
+    const el = chartRef.current
+    let disposed = false
 
-    const timer = requestAnimationFrame(() => {
-      try {
-        if (!chartInstance.current && chartRef.current) {
-          chartInstance.current = initChart(chartRef.current)
-          window.addEventListener('resize', onResize)
-        }
-        const option = buildOption()
-        if (chartInstance.current && Object.keys(option).length > 0) {
-          chartInstance.current.setOption(option, { notMerge: true, lazyUpdate: false })
-        }
-      } catch (e) {
-        console.error('Error updating chart:', e)
-      } finally {
-        setIsLoading(false)
+    const ensureInit = () => {
+      if (!chartInstance.current) {
+        chartInstance.current = initChart(el)
       }
+    }
+
+    const render = () => {
+      if (!chartInstance.current) return
+      const option = buildOption()
+      if (option && Object.keys(option).length > 0) {
+        chartInstance.current.clear()
+        chartInstance.current.setOption(option, { notMerge: true, lazyUpdate: false })
+        chartInstance.current.resize()
+      }
+    }
+
+    // init بعد از اینکه DOM اندازه گرفت
+    const raf = requestAnimationFrame(() => {
+      ensureInit()
+      render()
+      setIsLoading(false)
     })
 
+    // واکنش به تغییر اندازه واقعی کانتینر
+    const ro = new ResizeObserver(() => {
+      if (!disposed) {
+        ensureInit()
+        chartInstance.current?.resize()
+      }
+    })
+    ro.observe(el)
+
+    const onResize = () => chartInstance.current?.resize()
+    window.addEventListener('resize', onResize)
+
     return () => {
-      cancelAnimationFrame(timer)
+      disposed = true
+      cancelAnimationFrame(raf)
       window.removeEventListener('resize', onResize)
+      ro.disconnect()
     }
-  }, [type, xAxis, yAxis, open, data, buildOption])
+  }, [open, data, xAxis, yAxis, type, buildOption])
 
   const handleAdd = useCallback(() => {
-    if (!xAxis) return alert('Please select X column')
-    if (!yAxis) return alert('Please select Y column')
+    if (!xAxis) {
+      setError('Please select the X axis.')
+      return
+    }
+    if (!yAxis) {
+      setError('Please select the Y axis.')
+      return
+    }
 
+    setError('')
     const cfg: ChartConfig = { option: buildOption(), type, xAxis, yAxis }
     onAdd(cfg)
-
     onClose()
     setType('bar')
     setXAxis('')
@@ -110,19 +140,17 @@ const ChartBuilder = ({
   if (!open) return null
 
   return (
-    <Modal open={open} onClose={onClose} title="📊 Create New Chart">
-      <div className="space-y-5 max-w-3xl">
-
+    <Modal open={open} onClose={onClose} title="Create New Chart">
+      {/* ظرف اسکرول مودال با اسکرول‌بار تم‌محور */}
+      <div className="space-y-5 max-w-3xl max-h-[70vh] overflow-auto pr-1 scrollbar">
+        {/* اخطار نبود داده */}
         {allColumns.length === 0 && (
-          <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-700/50 rounded-lg flex items-center gap-3">
-            <span className="text-xl">⚠️</span>
-            <span className="text-sm font-medium text-amber-900 dark:text-amber-200">
-              No data available. Please upload a CSV or Excel file first.
-            </span>
+          <div className="p-4 border rounded-lg border-amber-200 dark:border-amber-700/50 bg-amber-50/70 dark:bg-amber-900/20 text-sm">
+            No data available. Please upload a CSV or Excel file first.
           </div>
         )}
 
-        {/* Chart Type */}
+        {/* انتخاب نوع چارت */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-gray-900 dark:text-white">Chart Type</span>
@@ -146,8 +174,17 @@ const ChartBuilder = ({
                 }`}
               >
                 <div className="flex flex-col items-center gap-2">
-                  <Icon size={20} className={type === value ? 'text-cyan-600 dark:text-cyan-300' : 'text-gray-600 dark:text-gray-400'} />
-                  <span className={`text-xs font-semibold ${type === value ? 'text-cyan-700 dark:text-cyan-300' : 'text-gray-700 dark:text-gray-300'}`}>
+                  <Icon
+                    size={20}
+                    className={
+                      type === value ? 'text-cyan-600 dark:text-cyan-300' : 'text-gray-600 dark:text-gray-400'
+                    }
+                  />
+                  <span
+                    className={`text-xs font-semibold ${
+                      type === value ? 'text-cyan-700 dark:text-cyan-300' : 'text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
                     {label}
                   </span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">{desc}</span>
@@ -161,24 +198,29 @@ const ChartBuilder = ({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-sm font-bold text-gray-900 dark:text-white">Horizontal Axis (X)</label>
-            {xAxis && <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium">✓ Selected</span>}
+            {xAxis && (
+              <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium flex items-center gap-1">
+                <CheckCircle className="w-3.5 h-3.5" /> Selected
+              </span>
+            )}
           </div>
           {allColumns.length === 0 ? (
             <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm text-gray-600 dark:text-gray-400">
               No columns available
             </div>
           ) : (
-            <Select
-              value={xAxis}
-              onChange={(e) => setXAxis(e.target.value)}
-              className="w-full bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-            >
-              <option value="">Choose a column...</option>
-              {allColumns.map((c: any) => (
-                <option key={c?.name} value={c?.name}>
-                  {c?.name} {c?.type && `• ${c.type}`}
-                </option>
-              ))}
+            <Select value={xAxis} onValueChange={(v) => setXAxis(v)}>
+              <SelectTrigger className="h-10">
+                <SelectValue placeholder="Choose a column..." />
+              </SelectTrigger>
+              <SelectContent>
+                {allColumns.map((c: any) => (
+                  <SelectItem key={c?.name} value={c?.name}>
+                    {c?.name}
+                    {c?.type ? ` • ${c.type}` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           )}
         </div>
@@ -187,40 +229,44 @@ const ChartBuilder = ({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-sm font-bold text-gray-900 dark:text-white">Vertical Axis (Y)</label>
-            {yAxis && <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium">✓ Selected</span>}
+            {yAxis && (
+              <span className="text-xs text-cyan-600 dark:text-cyan-400 font-medium flex items-center gap-1">
+                <CheckCircle className="w-3.5 h-3.5" /> Selected
+              </span>
+            )}
           </div>
           {numCols.length === 0 ? (
             <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-lg text-sm text-amber-700 dark:text-amber-300">
               No numeric columns found. Add numeric data to continue.
             </div>
           ) : (
-            <Select
-              value={yAxis}
-              onChange={(e) => setYAxis(e.target.value)}
-              className="w-full bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-            >
-              <option value="">Choose a column...</option>
-              {numCols.map((c: any) => (
-                <option key={c?.name} value={c?.name}>{c?.name}</option>
-              ))}
+            <Select value={yAxis} onValueChange={(v) => setYAxis(v)}>
+              <SelectTrigger className="h-10">
+                <SelectValue placeholder="Choose a column..." />
+              </SelectTrigger>
+              <SelectContent>
+                {numCols.map((c: any) => (
+                  <SelectItem key={c?.name} value={c?.name}>
+                    {c?.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           )}
         </div>
 
-        {/* Preview */}
+        {/* Live Preview */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-sm font-bold text-gray-900 dark:text-white">Live Preview</label>
-            <div className="flex items-center gap-2">
-              {isLoading && (
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                  <div className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></div>
-                  Rendering...
-                </div>
-              )}
-              {!isLoading && xAxis && yAxis && (
-                <span className="text-xs text-green-600 dark:text-green-400 font-medium">✓ Ready</span>
-              )}
+            <div className="text-xs">
+              {isLoading ? (
+                <span className="text-gray-500 dark:text-gray-400">Rendering…</span>
+              ) : xAxis && yAxis ? (
+                <span className="text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
+                  <CheckCircle className="w-3.5 h-3.5" /> Ready
+                </span>
+              ) : null}
             </div>
           </div>
           <div
@@ -229,25 +275,10 @@ const ChartBuilder = ({
           />
         </div>
 
-        {/* Stats */}
-        {data.length > 0 && (
-          <div className="grid grid-cols-2 gap-3 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-200 dark:border-blue-700/50 rounded-lg">
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-semibold text-blue-600 dark:text-blue-300">Total Rows</span>
-              <span className="text-2xl font-bold text-blue-700 dark:text-blue-400">
-                {data.length.toLocaleString()}
-              </span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-semibold text-cyan-600 dark:text-cyan-300">Total Columns</span>
-              <span className="text-2xl font-bold text-cyan-700 dark:text-cyan-400">
-                {allColumns.length}
-              </span>
-            </div>
-          </div>
-        )}
+        {/* خطای فرم (بدون alert) */}
+        {error && <div className="text-xs text-red-600 dark:text-red-400">{error}</div>}
 
-        {/* Actions */}
+        {/* عملیات */}
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={onClose}
@@ -257,10 +288,10 @@ const ChartBuilder = ({
           </button>
           <Button
             onClick={handleAdd}
-            disabled={!xAxis || !yAxis || data.length === 0 || isLoading}
+            disabled={!xAxis || !yAxis || !Array.isArray(data) || data.length === 0 || isLoading}
             className="px-6 py-2.5 font-medium"
           >
-            {isLoading ? 'Processing...' : '✓ Add Chart'}
+            Add Chart
           </Button>
         </div>
       </div>
