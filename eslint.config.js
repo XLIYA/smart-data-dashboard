@@ -1,23 +1,40 @@
+// eslint.config.js (ESM - Flat config, ESLint v9+)
 import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
+import reactPlugin from 'eslint-plugin-react'
+import hooks from 'eslint-plugin-react-hooks'
+import jsxA11y from 'eslint-plugin-jsx-a11y'
 import tseslint from 'typescript-eslint'
-import { defineConfig, globalIgnores } from 'eslint/config'
 
-export default defineConfig([
-  globalIgnores(['dist']),
+export default tseslint.config(
+  js.configs.recommended,
+  ...tseslint.configs.recommended, // TypeScript support
   {
     files: ['**/*.{ts,tsx}'],
-    extends: [
-      js.configs.recommended,
-      tseslint.configs.recommended,
-      reactHooks.configs['recommended-latest'],
-      reactRefresh.configs.vite,
-    ],
     languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
+      ecmaVersion: 2023,
+      sourceType: 'module',
+      parserOptions: { project: false }
     },
+    plugins: {
+      react: reactPlugin,
+      'react-hooks': hooks,
+      'jsx-a11y': jsxA11y
+    },
+    rules: {
+      'react/react-in-jsx-scope': 'off',
+      'react/jsx-uses-react': 'off',
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off'
+    },
+    settings: { react: { version: 'detect' } }
   },
-])
+  {
+    ignores: [
+      'node_modules',
+      'dist',
+      'build',
+      'coverage'
+    ]
+  }
+)

@@ -1,152 +1,151 @@
 // src/components/chart-builder/chart-builder.tsx
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import type { ECharts } from '@/lib/echarts'
+import { initChart } from '@/lib/echarts'
+
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '../ui/select'
-import { initChart } from '@/lib/echarts'
+
 import { BarChart3, TrendingUp, Zap, CheckCircle } from 'lucide-react'
-import type { ChartType } from './chart-types'
+import type { ChartBuilderProps, ChartConfig, ChartType } from './chart-types'
 import { useDarkModeRef } from './use-dark-mode-ref'
-
-type ChartBuilderProps = {
-  open: boolean
-  onClose: () => void
-  data: any[]
-  columns: { name: string; type?: string }[]
-  onAdd: (cfg: { type: ChartType; option: any }) => void
-}
-
-const getThemeColors = (isDark: boolean) => ({
-  text: isDark ? '#e5e7eb' : '#111827',
-  grid: isDark ? '#333' : '#e5e7eb',
-})
-
-const buildAxisOption = (args: { type: ChartType; xAxis: string; yAxis: string; data: any[]; isDark: boolean }) => {
-  const { type, xAxis, yAxis, data, isDark } = args
-  if (!xAxis || !yAxis || !Array.isArray(data) || data.length === 0) return {}
-  const colors = getThemeColors(isDark)
-  const xData = [...new Set(data.map((r: any) => String(r?.[xAxis] ?? '')))].slice(0, 200)
-  const yData = xData.map(x =>
-    Number.isFinite(+data.find((r: any) => String(r?.[xAxis] ?? '') === x)?.[yAxis])
-      ? +data.find((r: any) => String(r?.[xAxis] ?? '') === x)?.[yAxis]
-      : 0
-  )
-  return {
-    tooltip: { trigger: 'axis' },
-    grid: { left: 40, right: 20, top: 30, bottom: 40, containLabel: true },
-    xAxis: { type: 'category', data: xData, axisLine: { lineStyle: { color: colors.grid } }, axisLabel: { color: colors.text } },
-    yAxis: { type: 'value', axisLine: { lineStyle: { color: colors.grid } }, axisLabel: { color: colors.text }, splitLine: { lineStyle: { color: colors.grid } } },
-    series: [{ type, data: yData, smooth: type === 'line' }],
-  }
-}
-
-const buildScatterOption = (args: { xAxis: string; yAxis: string; data: any[]; isDark: boolean }) => {
-  const { xAxis, yAxis, data, isDark } = args
-  if (!xAxis || !yAxis || !Array.isArray(data) || data.length === 0) return {}
-  const colors = getThemeColors(isDark)
-  const points = data
-    .map((r: any) => [+r?.[xAxis], +r?.[yAxis]])
-    .filter(([x, y]) => Number.isFinite(x) && Number.isFinite(y))
-  return {
-    tooltip: { trigger: 'item' },
-    grid: { left: 40, right: 20, top: 30, bottom: 40, containLabel: true },
-    xAxis: { type: 'value', axisLine: { lineStyle: { color: colors.grid } }, axisLabel: { color: colors.text }, splitLine: { lineStyle: { color: colors.grid } } },
-    yAxis: { type: 'value', axisLine: { lineStyle: { color: colors.grid } }, axisLabel: { color: colors.text }, splitLine: { lineStyle: { color: colors.grid } } },
-    series: [{ type: 'scatter', data: points }],
-  }
-}
+import { buildAxisOption } from './build-axis-option'
+import { buildScatterOption } from './build-scatter-option'
 
 const ChartBuilder = ({ open, onClose, data, columns, onAdd }: ChartBuilderProps) => {
   const [type, setType] = useState<ChartType>('bar')
-  const [xAxis, setXAxis] = useState('')
-  const [yAxis, setYAxis] = useState('')
-  const [error, setError] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const [xAxis, setXAxis] = useState<string>('')
+  const [yAxis, setYAxis] = useState<string>('')
 
-  const chartRef = useRef<HTMLDivElement | null>(null)
-  const inst = useRef<any>(null)
+  const ref = useRef<HTMLDivElement | null>(null)
+  const inst = useRef<ECharts | null>(null)
+
+  // از ref فقط مقدار primitive استخراج می‌کنیم تا dependency درست باشد
   const isDarkRef = useDarkModeRef()
+  const isDark = isDarkRef.current
 
-  const numericCols = useMemo(() => columns.filter(c => c && c.name && ['number', 'numeric'].includes((c.type || '').toLowerCase())), [columns])
+  const numberColumns = useMemo(() => columns.filter((c) => c.type === 'number'), [columns])
 
+  // init / dispose
   useEffect(() => {
-    if (!open) return
-    if (chartRef.current) inst.current = initChart(chartRef.current)
-    return () => { inst.current?.dispose(); inst.current = null }
+    if (!open || !ref.current) return
+    inst.current = initChart(ref.current)
+    return () => {
+      inst.current?.dispose()
+      inst.current = null
+    }
   }, [open])
 
+  // live preview
   useEffect(() => {
     if (!inst.current) return
-    const isDark = !!isDarkRef.current
-    const option =
-      type === 'scatter'
-        ? buildScatterOption({ xAxis, yAxis, data, isDark })
-        : buildAxisOption({ type, xAxis, yAxis, data, isDark })
-    inst.current.setOption(option, { notMerge: true, lazyUpdate: true })
-  }, [type, xAxis, yAxis, data, isDarkRef.current])
+    if (!xAxis || !yAxis) {
+      inst.current.setOption({})
+      return
+    }
 
+    const opt =
+      type === 'scatter'
+        ? buildScatterOption({ data, xAxis, yAxis, isDark })
+        : buildAxisOption({ data, xAxis, yAxis, type, isDark })
+
+    inst.current.setOption(opt, true)
+  }, [data, xAxis, yAxis, type, isDark])
+
+  // add chart config (ChartConfig نیاز به option دارد)
   const handleAdd = useCallback(() => {
-    if (!xAxis) return setError('Please select the X axis.')
-    if (!yAxis) return setError('Please select the Y axis.')
-    setError('')
-    const isDark = !!isDarkRef.current
+    if (!xAxis || !yAxis) return
+
     const option =
       type === 'scatter'
-        ? buildScatterOption({ xAxis, yAxis, data, isDark })
-        : buildAxisOption({ type, xAxis, yAxis, data, isDark })
-    setIsLoading(true)
-    onAdd({ type, option })
-    setIsLoading(false)
+        ? buildScatterOption({ data, xAxis, yAxis, isDark })
+        : buildAxisOption({ data, xAxis, yAxis, type, isDark })
+
+    const cfg: ChartConfig = { type, xAxis, yAxis, option }
+    onAdd(cfg)
     onClose()
-  }, [type, xAxis, yAxis, data, onAdd, onClose])
+  }, [type, xAxis, yAxis, isDark, data, onAdd, onClose])
 
   return (
-    <Modal open={open} onClose={onClose} title="Build a Chart">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="space-y-3">
-          <label className="block text-sm font-medium">Chart type</label>
-          <Select value={type} onValueChange={(v) => setType(v as ChartType)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="bar"><div className="inline-flex items-center gap-2"><BarChart3 className="h-4 w-4" /> Bar</div></SelectItem>
-              <SelectItem value="line"><div className="inline-flex items-center gap-2"><TrendingUp className="h-4 w-4" /> Line</div></SelectItem>
-              <SelectItem value="scatter"><div className="inline-flex items-center gap-2"><Zap className="h-4 w-4" /> Scatter</div></SelectItem>
-            </SelectContent>
-          </Select>
-
-          <label className="block text-sm font-medium mt-4">X axis</label>
-          <Select value={xAxis} onValueChange={setXAxis}>
-            <SelectTrigger><SelectValue placeholder="Select X axis column" /></SelectTrigger>
-            <SelectContent>
-              {columns.map(c => <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-
-          <label className="block text-sm font-medium mt-4">Y axis</label>
-          <Select value={yAxis} onValueChange={setYAxis}>
-            <SelectTrigger><SelectValue placeholder="Select Y axis column" /></SelectTrigger>
-            <SelectContent>
-              {(numericCols.length ? numericCols : columns).map(c => <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-
-          {error && <p className="text-sm text-red-600">{error}</p>}
+    <Modal open={open} onClose={onClose} title="Chart Builder">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        {/* Chart Type */}
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium">Chart Type</label>
+          <div className="grid grid-cols-3 gap-2">
+            <Button
+              variant={type === 'bar' ? 'primary' : 'secondary'}
+              onClick={() => setType('bar')}
+              aria-label="Bar"
+              title="Bar"
+            >
+              <BarChart3 size={16} />
+            </Button>
+            <Button
+              variant={type === 'line' ? 'primary' : 'secondary'}
+              onClick={() => setType('line')}
+              aria-label="Line"
+              title="Line"
+            >
+              <TrendingUp size={16} />
+            </Button>
+            <Button
+              variant={type === 'scatter' ? 'primary' : 'secondary'}
+              onClick={() => setType('scatter')}
+              aria-label="Scatter"
+              title="Scatter"
+            >
+              <Zap size={16} />
+            </Button>
+          </div>
         </div>
 
-        <div className="md:col-span-2 min-h-[320px] rounded-xl border border-zinc-200 dark:border-zinc-700">
-          <div ref={chartRef as any} className="h-[320px]" />
+        {/* X Axis */}
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium">X Axis</label>
+          <Select value={xAxis} onValueChange={setXAxis}>
+            <SelectTrigger className="h-9 rounded-lg border px-3">
+              <SelectValue placeholder="Select X column" />
+            </SelectTrigger>
+            <SelectContent>
+              {columns.map((c) => (
+                <SelectItem key={c.name} value={c.name}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Y Axis */}
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium">Y Axis (numeric)</label>
+          <Select value={yAxis} onValueChange={setYAxis}>
+            <SelectTrigger className="h-9 rounded-lg border px-3">
+              <SelectValue placeholder="Select Y column" />
+            </SelectTrigger>
+            <SelectContent>
+              {numberColumns.map((c) => (
+                <SelectItem key={c.name} value={c.name}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between">
-        <div className="text-xs text-zinc-500 dark:text-zinc-400 inline-flex items-center gap-2">
-          <CheckCircle className="h-4 w-4" />
-          Make sure X and Y are valid for the chosen chart type.
-        </div>
-        <Button onClick={handleAdd} disabled={!xAxis || !yAxis || isLoading}>
-          Add Chart
+      {/* Preview */}
+      <div className="mt-4 h-[320px] rounded-lg border" ref={ref} />
+
+      {/* Actions */}
+      <div className="mt-4 flex justify-end gap-2">
+        <Button variant="ghost" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button onClick={handleAdd}>
+          <CheckCircle size={16} /> Add
         </Button>
       </div>
     </Modal>
