@@ -21,11 +21,14 @@ const ChartBuilder = ({ open, onClose, data, columns, onAdd }: ChartBuilderProps
   const ref = useRef<HTMLDivElement | null>(null)
   const inst = useRef<ECharts | null>(null)
 
-  // از ref فقط مقدار primitive استخراج می‌کنیم تا dependency درست باشد
+  // theme
   const isDarkRef = useDarkModeRef()
   const isDark = isDarkRef.current
 
-  const numberColumns = useMemo(() => columns.filter((c) => c.type === 'number'), [columns])
+  const numberColumns = useMemo(
+    () => columns.filter((c) => c.type === 'number'),
+    [columns]
+  )
 
   // init / dispose
   useEffect(() => {
@@ -41,6 +44,7 @@ const ChartBuilder = ({ open, onClose, data, columns, onAdd }: ChartBuilderProps
   useEffect(() => {
     if (!inst.current) return
     if (!xAxis || !yAxis) {
+      inst.current.clear()
       inst.current.setOption({})
       return
     }
@@ -53,7 +57,7 @@ const ChartBuilder = ({ open, onClose, data, columns, onAdd }: ChartBuilderProps
     inst.current.setOption(opt, true)
   }, [data, xAxis, yAxis, type, isDark])
 
-  // add chart config (ChartConfig نیاز به option دارد)
+  // add chart config
   const handleAdd = useCallback(() => {
     if (!xAxis || !yAxis) return
 
@@ -71,34 +75,18 @@ const ChartBuilder = ({ open, onClose, data, columns, onAdd }: ChartBuilderProps
     <Modal open={open} onClose={onClose} title="Chart Builder">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {/* Chart Type */}
-        <div className="flex flex-col gap-2">
+        <div className="md:col-span-1 flex flex-col gap-2">
           <label className="text-sm font-medium">Chart Type</label>
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              variant={type === 'bar' ? 'primary' : 'secondary'}
-              onClick={() => setType('bar')}
-              aria-label="Bar"
-              title="Bar"
-            >
-              <BarChart3 size={16} />
-            </Button>
-            <Button
-              variant={type === 'line' ? 'primary' : 'secondary'}
-              onClick={() => setType('line')}
-              aria-label="Line"
-              title="Line"
-            >
-              <TrendingUp size={16} />
-            </Button>
-            <Button
-              variant={type === 'scatter' ? 'primary' : 'secondary'}
-              onClick={() => setType('scatter')}
-              aria-label="Scatter"
-              title="Scatter"
-            >
-              <Zap size={16} />
-            </Button>
-          </div>
+          <Select value={type} onValueChange={(v) => setType(v as ChartType)}>
+            <SelectTrigger className="h-9 rounded-lg border px-3">
+              <SelectValue placeholder="Select type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="bar"><div className="flex items-center gap-2"><BarChart3 size={16}/> Bar</div></SelectItem>
+              <SelectItem value="line"><div className="flex items-center gap-2"><TrendingUp size={16}/> Line</div></SelectItem>
+              <SelectItem value="scatter"><div className="flex items-center gap-2"><Zap size={16}/> Scatter</div></SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* X Axis */}
@@ -110,9 +98,7 @@ const ChartBuilder = ({ open, onClose, data, columns, onAdd }: ChartBuilderProps
             </SelectTrigger>
             <SelectContent>
               {columns.map((c) => (
-                <SelectItem key={c.name} value={c.name}>
-                  {c.name}
-                </SelectItem>
+                <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -127,9 +113,7 @@ const ChartBuilder = ({ open, onClose, data, columns, onAdd }: ChartBuilderProps
             </SelectTrigger>
             <SelectContent>
               {numberColumns.map((c) => (
-                <SelectItem key={c.name} value={c.name}>
-                  {c.name}
-                </SelectItem>
+                <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -137,16 +121,14 @@ const ChartBuilder = ({ open, onClose, data, columns, onAdd }: ChartBuilderProps
       </div>
 
       {/* Preview */}
-      <div className="mt-4 h-[320px] rounded-lg border" ref={ref} />
+      <div className="mt-4">
+        <div ref={ref} className="h-[320px] w-full rounded-xl border" />
+      </div>
 
       {/* Actions */}
       <div className="mt-4 flex justify-end gap-2">
-        <Button variant="ghost" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button onClick={handleAdd}>
-          <CheckCircle size={16} /> Add
-        </Button>
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button onClick={handleAdd}><CheckCircle size={16}/> Add</Button>
       </div>
     </Modal>
   )

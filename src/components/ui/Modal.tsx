@@ -5,8 +5,13 @@ export default function Modal({
   open,
   title,
   onClose,
-  children
-}: { open: boolean; title: string; onClose: () => void; children: ReactNode }) {
+  children,
+}: {
+  open: boolean
+  title: string
+  onClose: () => void
+  children: ReactNode
+}) {
   if (!open) return null
 
   return (
@@ -15,21 +20,20 @@ export default function Modal({
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 border border-gray-200 dark:border-white/10 max-h-[90vh] overflow-y-auto">
+      <div className="relative z-10 w-full max-w-3xl rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-white/10">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h2>
+        <div className="flex items-center justify-between gap-4 border-b border-zinc-200 dark:border-zinc-700 px-4 py-3">
+          <h3 className="text-base font-semibold">{title}</h3>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition text-gray-600 dark:text-gray-400"
+            className="p-1 hover:bg-zinc-100 dark:hover:bg-white/10 rounded-lg transition text-zinc-600 dark:text-zinc-400"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
-
         {/* Content */}
-        {children}
+        <div className="p-4">{children}</div>
       </div>
     </div>
   )

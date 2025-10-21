@@ -11,8 +11,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'), // برای import های '@/...'
+      '@': path.resolve(__dirname, 'src'),
     },
   },
-  server: { host: true },
 })
