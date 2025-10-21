@@ -4,7 +4,7 @@ import { getThemeColors } from './get-theme-colors'
 import type { EChartsOption } from '@/lib/echarts'
 import type { DataSet, Row, Cell } from '@/types/data'
 
-/** امضا ۱: فرم فعلی شما */
+
 export interface BuildAxisArgsXY {
   type: ChartType
   xAxis: string
@@ -13,7 +13,7 @@ export interface BuildAxisArgsXY {
   isDark: boolean
 }
 
-/** امضا ۲: فرم پیشنهادی قبلی */
+
 export interface BuildAxisArgsKeyed {
   seriesType: Exclude<ChartType, 'scatter'> | 'bar' | 'line'
   xKey: keyof Row | string
@@ -24,7 +24,7 @@ export interface BuildAxisArgsKeyed {
 
 export type BuildAxisArgs = BuildAxisArgsXY | BuildAxisArgsKeyed
 
-/** کمکی: Cell → number (نامعتبر → NaN) */
+
 function toNumber(v: Cell): number {
   if (typeof v === 'number') return v
   if (v instanceof Date) return v.getTime()
@@ -34,7 +34,7 @@ function toNumber(v: Cell): number {
   return Number.isNaN(n) ? NaN : n
 }
 
-/** آرایه یکتا از رشته‌ها */
+
 function uniqueStrings(arr: string[]): string[] {
   const set = new Set<string>()
   for (const s of arr) if (s) set.add(s)
@@ -42,7 +42,7 @@ function uniqueStrings(arr: string[]): string[] {
 }
 
 export const buildAxisOption = (raw: BuildAxisArgs): EChartsOption => {
-  // نرمال‌سازی ورودی‌ها برای پشتیبانی از هر دو امضا
+
   const seriesType: 'bar' | 'line' =
     'type' in raw ? (raw.type === 'line' ? 'line' : 'bar') : raw.seriesType
   const x = 'xAxis' in raw ? raw.xAxis : String(raw.xKey)
@@ -52,11 +52,11 @@ export const buildAxisOption = (raw: BuildAxisArgs): EChartsOption => {
 
   if (!x || !y || !Array.isArray(data) || data.length === 0) return {}
 
-  // استخراج دسته‌های محور X (به‌صورت یکتا، حداکثر 50)
+
   const xDataAll = data.map((r) => String(r[x] ?? ''))
   const xData = uniqueStrings(xDataAll).slice(0, 50)
 
-  // محاسبه مقدار Y برای هر دسته X (میانگین مقادیر)
+
   const yData: number[] = xData.map((cat) => {
     const vals = data
       .filter((r) => String(r[x] ?? '') === cat)
@@ -94,7 +94,6 @@ export const buildAxisOption = (raw: BuildAxisArgs): EChartsOption => {
       top: 60,
       bottom: 60,
       containLabel: true
-      // توجه: خصوصیات ظاهری شبکه (رنگ، نمایش) را با splitLine محور‌ها کنترل می‌کنیم
     },
     xAxis: {
       type: 'category',
@@ -164,7 +163,6 @@ export const buildAxisOption = (raw: BuildAxisArgs): EChartsOption => {
     return option
   }
 
-  // line
   const option: EChartsOption = {
     ...baseOption,
     series: [
