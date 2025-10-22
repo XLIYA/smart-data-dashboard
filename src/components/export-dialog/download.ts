@@ -1,3 +1,5 @@
+// src/components/export-dialog/download.ts
+
 export const downloadBlob = (blob: Blob, fileName: string) => {
   const a = document.createElement('a')
   const url = URL.createObjectURL(blob)

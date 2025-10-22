@@ -1,3 +1,5 @@
+// src/components/chart-builder/use-dark-mode-ref.ts
+
 import { useEffect, useRef } from 'react'
 
 export const useDarkModeRef = () => {

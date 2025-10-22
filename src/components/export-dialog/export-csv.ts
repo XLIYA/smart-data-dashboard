@@ -1,3 +1,5 @@
+// src/components/export-dialog/export-csv.ts
+
 type CsvArgs = {
   data: any[]
   columns: Array<{ name: string }>

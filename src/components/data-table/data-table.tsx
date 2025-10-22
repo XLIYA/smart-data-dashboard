@@ -1,3 +1,4 @@
+// src/components/data-table/data-table.tsx
 import Card from '../ui/Card'
 import { useMemo } from 'react'
 import type { DataTableProps } from './types'

@@ -1,3 +1,5 @@
+// src/components/export-dialog/types.ts
+
 export type ExportDialogProps = {
   open: boolean
   onClose: () => void

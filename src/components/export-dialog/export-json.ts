@@ -1,3 +1,5 @@
+// src/components/export-dialog/export-json.ts
+
 type JsonArgs = {
   data: any[]
   columns: any[]

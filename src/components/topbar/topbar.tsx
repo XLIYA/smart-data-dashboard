@@ -1,15 +1,28 @@
+// src/components/topbar/topbar.tsx
 import { useLocation } from 'react-router-dom'
 import { useState } from 'react'
-import { Moon, Sun, Menu, X } from 'lucide-react'
+import { Moon, Sun, Menu, X, Trash2 } from 'lucide-react'
 import Brand from './brand'
 import DesktopNav from './desktop-nav'
 import MobileNav from './mobile-nav'
 import { useDarkMode } from './use-dark-mode'
+import { useDataStore } from '@/stores/dataStore'
+import { useChartStore } from '@/stores/chartStore'
 
 const Topbar = () => {
   const { pathname } = useLocation()
   const { dark, setDark } = useDarkMode()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const reset = useDataStore((s) => s.reset)
+  const clearCharts = useChartStore((s) => s.clearCharts)
+
+  const handleReset = () => {
+    if (confirm('Are you sure you want to clear all data and charts?')) {
+      reset()
+      clearCharts()
+      window.location.href = '/'
+    }
+  }
 
   return (
     <header className="sticky top-4 z-40 mb-6 px-4">
@@ -23,6 +36,16 @@ const Topbar = () => {
 
           {/* Right Controls */}
           <div className="flex items-center gap-2">
+            {/* Reset Button */}
+            <button
+              onClick={handleReset}
+              className="hidden md:flex p-2.5 rounded-xl border border-gray-200/60 dark:border-white/10 hover:bg-red-50 dark:hover:bg-red-500/10 hover:border-red-300 dark:hover:border-red-500/30 transition-all duration-300 hover:shadow-md group"
+              title="Clear All Data"
+              aria-label="Clear all data and charts"
+            >
+              <Trash2 className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors" />
+            </button>
+
             {/* Dark Mode Toggle */}
             <button
               onClick={() => setDark(!dark)}
@@ -31,9 +54,9 @@ const Topbar = () => {
               aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {dark ? (
-                <Sun className="w-5 h-5 text-yellow-500 transition-transform duration-300" />
+                <Sun className="w-5 h-5 text-yellow-500 transition-transform duration-300 hover:rotate-45" />
               ) : (
-                <Moon className="w-5 h-5 text-indigo-500 transition-transform duration-300" />
+                <Moon className="w-5 h-5 text-indigo-500 transition-transform duration-300 hover:-rotate-12" />
               )}
             </button>
 

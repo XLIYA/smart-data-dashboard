@@ -1,1 +1,6 @@
 export { default } from './chart-builder/chart-builder'
+export * from './chart-builder/chart-types'
+export * from './chart-builder/build-axis-option'
+export * from './chart-builder/build-scatter-option'
+export * from './chart-builder/build-pie-option'
+export * from './chart-builder/get-theme-colors'
