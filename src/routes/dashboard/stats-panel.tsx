@@ -1,5 +1,5 @@
 // src/routes/dashboard/stats-panel.tsx
-import { useMemo } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import Card from '@/components/ui/Card'
 import {
   calculateStatistics,
@@ -29,7 +29,14 @@ export const StatsPanel = ({ data, columns }: Props) => {
     () => calculateCorrelations(data, columns).slice(0, 3),
     [data, columns]
   )
-  const outliers = useMemo(() => detectOutliers(data, columns), [data, columns])
+  
+  // ✅ استفاده از useState برای force update
+  const [outliers, setOutliers] = useState(() => detectOutliers(data, columns))
+
+  // ✅ Update outliers وقتی data تغییر می‌کند
+  useEffect(() => {
+    setOutliers(detectOutliers(data, columns))
+  }, [data, columns])
 
   const StatCard = ({
     icon: Icon,
@@ -210,14 +217,14 @@ export const StatsPanel = ({ data, columns }: Props) => {
                   </div>
                   <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-1 truncate">
                     Range: {Math.min(...out.outliers).toFixed(2)} to{' '}
-                      {Math.max(...out.outliers).toFixed(2)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-        </div>
+                    {Math.max(...out.outliers).toFixed(2)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
       </div>
-    )
-  }
+    </div>
+  )
+}

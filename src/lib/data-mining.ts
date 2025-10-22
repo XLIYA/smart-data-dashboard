@@ -37,7 +37,9 @@ export interface OutlierInfo {
   count: number
 }
 
-// محاسبه آمار کلی
+/**
+ * محاسبه آمار کلی دیتاست
+ */
 export const calculateStatistics = (
   data: any[],
   columns: ColumnMeta[]
@@ -66,13 +68,17 @@ export const calculateStatistics = (
   }
 }
 
-// آمار هر ستون
+/**
+ * محاسبه آمار تفصیلی هر ستون
+ */
 export const calculateColumnStats = (
   data: any[],
   columns: ColumnMeta[]
 ): ColumnStats[] => {
   return columns.map((col) => {
-    const values = data.map((row) => row[col.name]).filter((v) => v != null && v !== '')
+    const values = data
+      .map((row) => row[col.name])
+      .filter((v) => v != null && v !== '')
     const missing = data.length - values.length
 
     const stats: ColumnStats = {
@@ -84,7 +90,7 @@ export const calculateColumnStats = (
     }
 
     // برای ستون‌های عددی
-    if (col.type === 'number') {
+    if (col.type === 'number' && values.length > 0) {
       const numbers = values.map(Number).filter((n) => !isNaN(n))
       if (numbers.length > 0) {
         const sorted = [...numbers].sort((a, b) => a - b)
@@ -122,7 +128,9 @@ export const calculateColumnStats = (
   })
 }
 
-// محاسبه همبستگی بین ستون‌های عددی
+/**
+ * محاسبه همبستگی بین ستون‌های عددی (Pearson Correlation)
+ */
 export const calculateCorrelations = (
   data: any[],
   columns: ColumnMeta[]
@@ -151,24 +159,26 @@ export const calculateCorrelations = (
       const pSum = pairs.reduce((s, [a, b]) => s + a * b, 0)
 
       const num = pSum - (sum1 * sum2) / n
-      const den = Math.sqrt(
-        (sum1Sq - (sum1 * sum1) / n) * (sum2Sq - (sum2 * sum2) / n)
-      )
+      const den = Math.sqrt((sum1Sq - (sum1 * sum1) / n) * (sum2Sq - (sum2 * sum2) / n))
 
       const correlation = den === 0 ? 0 : num / den
 
       correlations.push({
         col1,
         col2,
-        correlation: Math.round(correlation * 100) / 100,
+        correlation: Math.round(correlation * 1000) / 1000,
       })
     }
   }
 
-  return correlations.sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation))
+  return correlations.sort(
+    (a, b) => Math.abs(b.correlation) - Math.abs(a.correlation)
+  )
 }
 
-// تشخیص Outliers با IQR method
+/**
+ * تشخیص Outliers با روش IQR (Interquartile Range)
+ */
 export const detectOutliers = (data: any[], columns: ColumnMeta[]): OutlierInfo[] => {
   const numCols = columns.filter((c) => c.type === 'number')
   const outliers: OutlierInfo[] = []
@@ -201,4 +211,14 @@ export const detectOutliers = (data: any[], columns: ColumnMeta[]): OutlierInfo[
   })
 
   return outliers
+}
+
+/**
+ * Recalculate outliers - برای استفاده بعد از data cleaning
+ */
+export const recalculateOutliers = (
+  data: any[],
+  columns: ColumnMeta[]
+): OutlierInfo[] => {
+  return detectOutliers(data, columns)
 }

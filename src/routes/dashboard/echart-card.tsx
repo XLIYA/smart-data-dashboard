@@ -1,3 +1,4 @@
+// src/routes/dashboard/echart-card.tsx
 import { memo, useEffect, useRef } from 'react'
 import { initChart } from '@/lib/echarts'
 
@@ -13,7 +14,6 @@ export const EChartCard = memo(({ option, className = 'h-[300px] lg:h-[400px]' }
 
     const handleResize = () => inst.resize()
 
-    // ResizeObserver → دقیق‌تر از window.resize
     const ro = new ResizeObserver(() => handleResize())
     ro.observe(ref.current)
 
@@ -26,5 +26,6 @@ export const EChartCard = memo(({ option, className = 'h-[300px] lg:h-[400px]' }
     }
   }, [option])
 
-  return <div ref={ref} className={className} />
+  // ✅ اضافه کردن data attribute برای PDF export
+  return <div ref={ref} className={className} data-chart-container />
 })
