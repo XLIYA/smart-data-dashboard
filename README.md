@@ -1,143 +1,149 @@
-# Smart Data Dashboard
+# Bluviz Smart Dashboard
 
-> Version: 0.0.1
+![Vite](https://img.shields.io/badge/Vite-4+-purple) ![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue) ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3+-teal) ![Zustand](https://img.shields.io/badge/State-Zustand-orange) ![Charts](https://img.shields.io/badge/Charts-ECharts/Recharts-informational)
 
-A minimal, fast, and elegant **data dashboard** built with **Vite + React**, **TypeScript**, and **Tailwind CSS**, featuring modern **shadcn/ui** components and **lucide-react** icons.  
-This project provides an interactive environment for **uploading, previewing, visualizing (ECharts)**, and **exporting (PDF / Word)** datasets — all with a clean and consistent UI.
+A modern, local‑first **data analytics dashboard** for exploring CSV/Excel data, building charts fast, and exporting clean reports.
 
----
-
-## ✨ Key Features
-- Sleek and modern UI built with **shadcn/ui**
-- **lucide-react** icons and rounded hoverable buttons
-- Modular, scalable component structure
-- Light/Dark mode theme support
-- Minimal **UploadDropzone** for file uploads
-- Interactive **ChartBuilder** using ECharts (`bar`, `line`, `scatter`)
-- **Export to PDF/Word** (client-side ready)
-- Fully **TypeScript**-based and ESLint-ready
-
----
+## ✨ Features
+- Local data store (Zustand)
+- CSV/Excel upload & preview
+- Interactive Chart Builder
+- Export to PDF
+- Export to CSV/JSON
+- Multiple chart engines (ECharts/Recharts)
+- Quick Insights (auto analysis)
+- Data cleaning helpers
 
 ## 🧱 Tech Stack
-- ⚡ **Vite + React**
-- 💎 **TypeScript**
-- 🎨 **Tailwind CSS**
-- 🧩 **shadcn/ui**
-- 🔆 **lucide-react**
-- 📊 **ECharts (custom wrapper)**
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- Zustand
+- ECharts
+- Lucide Icons
+- ESLint
 
----
-
-## 🗂 Project Structure (sample)
+## 📁 Project Structure (top-level)
 ```
-📁 src/
-  📁 components/
-  📁 hooks/
-  📁 pages/
-  📁 utils/
-  📄 main.tsx
-  📄 App.tsx
+- README.md
+- eslint.config.js
+- index.html
+- package-lock.json
+- package.json
+- postcss.config.js
+▸ src/
+  - App.css
+  - App.tsx
+  ▸ assets/
+  ▸ components/
+  - index.css
+  ▸ lib/
+  - main.tsx
+  ▸ routes/
+  ▸ stores/
+  ▸ styles/
+  ▸ types/
+  - vite-env.d.ts
+- tailwind.config.js
+- tsconfig.app.json
+- tsconfig.json
+- tsconfig.node.json
+- vite.config.ts
 ```
-
----
 
 ## 🚀 Getting Started
-### 1. Requirements
-- Node.js ≥ 18  
-- npm
 
-### 2. Install dependencies
+### 1) Prerequisites
+- Node.js 18+ and npm 9+ (or pnpm/yarn)
+
+### 2) Install
 ```bash
 npm install
 ```
 
-### 3. Run development server
+### 3) Development
 ```bash
 npm run dev
 ```
+- Starts Vite dev server. Open the printed local URL.
 
-### 4. Build for production
+### 4) Build & Preview
 ```bash
 npm run build
+npm run preview
 ```
 
----
+## ⚙️ Available Scripts
+- `dev` — `vite`
+- `build` — `tsc -b && vite build`
+- `lint` — `eslint .`
+- `preview` — `vite preview`
 
-## 🧪 Available Scripts
-- `dev` → start development server  
-- `build` → build production bundle  
-- `preview` → preview built app  
-- `lint` → run ESLint checks  
+## 🎨 UI & Design
+- Tailwind utility classes for styling
+- Lucide icons for crisp vector icons
+- Optional shadcn/ui & Radix primitives for accessible components
+- Motion/animation with Framer Motion
 
----
+## 📊 Charts
+- ECharts and/or Recharts supported
+- Interactive **Chart Builder** to map columns (x/y) and choose chart types
+- Live preview before saving a chart
 
-## ⚙️ Environment Variables
-Environment variables detected in the code:
+## 🗃️ Data
+- Local‑first: user data kept in memory/state (Zustand)
+- Import CSV/Excel; preview + basic cleaning
+- Quick Insights module for fast stats (mean, missing values, duplicates, etc.)
+
+## 📤 Export
+- Export charts/data to **PDF** and **CSV/JSON**
+- (If installed) `jspdf`, `html2canvas`, and `jspdf-autotable` power the PDF export
+
+## 🔧 Configuration
+### TypeScript
+- Strict TS config with path aliases (`@/*`) if defined in `tsconfig.json`
+
+### Environment Variables
+_No environment variables required by code. Add as needed._
+
+Create a `.env` (or `.env.local`) and prefix client variables with `VITE_` when using Vite, e.g.:
+```env
+VITE_API_URL=https://api.example.com
 ```
--
-```
 
-Create a `.env.local` file and set variables as needed.
-
----
-
-## 🧩 UI Development Notes
-- **Select boxes** use prebuilt components from `shadcn/ui`  
-- **TopBar** has rounded corners and animated hover states (lucide-react icons only)  
-- **UploadDropzone.tsx** redesigned to be minimal and intuitive  
-- All texts are in **English** and layout is **LTR**  
-- **Contact** button removed from the top bar  
-- **Landing** and **Preview** sections refined for better clarity  
-
----
-
-## 📊 ChartBuilder (ECharts)
-- Location: `src/components/ChartBuilder.tsx`
-- Props: `open`, `onClose`, `data`, `columns`, `onAdd`
-- Chart types: `bar`, `line`, `scatter`
-
----
-
-## 🧾 Exporting Data
-- **PDF Export**: use `jspdf` or `html2pdf.js`
-- **Word Export**: use the `docx` library for client-side document generation
-
----
-
-## 🧹 Code Quality
-- Fully linted with **ESLint** and **Prettier**
-- Commit messages follow **Conventional Commits** format:
-  ```bash
-  feat(ui): replace selects with shadcn components and improve hover states
-  fix(upload): simplify UploadDropzone styles for minimal look
-  ```
-
----
-
-## 🛠 Common Issues
-**Error:** `Cannot find package '@vitejs/plugin-react'`  
-➡️ Fix by installing it manually:
+## 🧪 Quality
+- ESLint + Prettier recommended
+- Suggested commands:
 ```bash
-npm add -D @vitejs/plugin-react
+npm run lint
+npm run format
 ```
+(If not present, add scripts in `package.json`.)
 
-**Error:** “Objects are not valid as a React child”  
-➡️ Make sure to render arrays or strings only. For debugging, use `JSON.stringify()`.
+## 🏗️ Suggested Folder Conventions
+```
+src/
+  components/        # Reusable UI
+  routes/            # Route-level pages
+  stores/            # Zustand stores
+  lib/               # Utilities (echarts init, exporters, etc.)
+  hooks/             # Custom hooks
+  assets/            # Static assets
+```
+Update as needed to match existing structure.
 
----
-
-## 📦 Deployment
-- **Vercel** (recommended) or **Netlify / Static hosting**  
-- Set your environment variables in platform settings
-
----
+## 🐞 Troubleshooting
+- **`Cannot find package '@vitejs/plugin-react'`** → `npm i -D @vitejs/plugin-react`
+- **Type errors for `vite/client`** → Ensure `types: ["vite/client"]` in `tsconfig.json` and `npm i -D vite`
+- **ESLint peer conflicts** → Align `@typescript-eslint/*` versions (plugin & parser) across devDependencies
+- **Vite fails on Windows paths** → Delete `node_modules` and lockfile, then reinstall
 
 ## 🤝 Contributing
-- Please open PRs with clear **before/after** explanations and UI screenshots  
-- Run `lint` and `build` before submitting PRs  
+1. Create a feature branch: `git checkout -b feat/awesome-thing`
+2. Commit with conventional messages: `feat(builder): add scatter plot`
+3. Open a PR with before/after screenshots
 
 ---
 
-## 📜 License
-MIT License © 2025
+> Generated automatically from the current project structure to give you a clean starting README. Adjust sections (features/envs) to match your exact setup.
